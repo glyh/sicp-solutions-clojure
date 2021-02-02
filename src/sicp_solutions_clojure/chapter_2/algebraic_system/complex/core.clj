@@ -1,5 +1,5 @@
 (ns sicp-solutions-clojure.chapter-2.algebraic-system.complex.core
-  (:refer-clojure :exclude [get type val])
+  (:refer-clojure :exclude [get type val zero?])
   (:require (sicp-solutions-clojure.chapter-2.algebraic-system.complex
              [cartesian :as cartesian]
              [polar :as polar])))
@@ -19,6 +19,7 @@
 (defn apply-general [sym x] 
   ((get [sym (type x)]) x))
 
+(def eps 1e-7)
 (defn real-part [x] (apply-general 'real-part x))
 (defn imag-part [x] (apply-general 'imag-part x))
 (defn magnitude [x] (apply-general 'magnitude x))
@@ -43,6 +44,10 @@
 (defn div [z1 z2]
   (mag-ang->complex (/ (magnitude z1) (magnitude z2))
                     (- (angle z1) (angle z2))))
+
+(defn eq? [z1 z2] (< (magnitude (sub z1 z2)) eps))
+(defn zero? [z] (= (magnitude z) 0))
+
 
 (defn tag [x] (vector 'complex x))
 

@@ -1,9 +1,9 @@
 (ns sicp-solutions-clojure.chapter-2.algebraic-system.ratio
-  (:refer-clojure))
+  (:refer-clojure :exclude [zero?]))
 
 (defn gcd [x y]
   (loop [a x b y]
-    (if (zero? b) 
+    (if (clojure.core/zero? b) 
       a
       (recur b (mod a b)))))
 
@@ -26,5 +26,10 @@
   (make (* (numer x) (numer y)) (* (denom x) (denom y))))
 (defn div [x y]
   (make (* (numer x) (denom y)) (* (denom x) (denom y))))
+
+(defn eq? [x y]
+  (= (* (numer x) (denom y)) 
+     (* (numer y) (denom x))))
+(defn zero? [x] (= (numer x) 0))
 
 (defn tag [x] (vector 'rational x))
