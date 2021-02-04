@@ -13,5 +13,8 @@
 (defn imag-part [z]
   (* (magnitude z) (Math/sin (angle z))))
 
+(defn neg [z]
+  (make (magnitude z) (- Math/PI (angle z))))
+
 (defn tag [x]
   (vector 'polar x))

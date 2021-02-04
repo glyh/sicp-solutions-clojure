@@ -10,14 +10,27 @@
 (def numer first)
 (def denom second)
 
+(defn sgn [x]
+  (cond 
+    (> x 0) 1
+    (< x 0) -1
+    :else   0))
+(defn abs [x]
+  (if (>= x 0) x (- x))) 
+
 (defn make [n d]
-  (let [g (gcd n d)]
+  (assert (not= d 0))
+  (let [g (* (sgn d) (abs (gcd n d)))]
     (vector (/ n g) (/ d g))))
 
 (defn add [x y]
   (make (+ (* (numer x) (denom y))
                (* (denom x) (numer y)))
             (* (denom x) (denom y))))
+
+(defn neg [x] 
+  (make (- (numer x)) (denom x)))
+
 (defn sub [x y]
   (make (- (* (numer x) (denom y))
                (* (denom x) (numer y)))

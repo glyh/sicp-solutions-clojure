@@ -18,5 +18,8 @@
       (neg? a)   Math/PI
       :else      0))
 
+(defn neg [x]
+  (make (- (real-part x)) (imag-part x)))
+
 (defn tag [x]
   (vector 'cartesian x))

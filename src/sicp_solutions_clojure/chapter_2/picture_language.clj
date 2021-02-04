@@ -53,38 +53,6 @@
 (defn flip-horiz [painter]
   (transform-painter painter (make-vect 1 0) (make-vect 0 0) (make-vect 1 1)))
 
-(defn setup []
-  ; Set frame rate to 30 frames per second.
-  (q/frame-rate 30)
-  ; Set color mode to HSB (HSV) instead of default RGB.
-  (q/color-mode :hsb)
-  ; setup function returns initial state. It contains
-  ; circle color and position.
-  {:color 0
-   :angle 0})
-
-(defn transform-painter [painter origin corner1 corner2]
-  (fn [frame]
-    (let [m          (frame-coord-map frame)
-          new-origin (m origin)]
-      (painter (make-frame new-origin 
-                           (sub-vect (m corner1) new-origin)
-                           (sub-vect (m corner2) new-origin))))))
-
-(defn transform-painter [painter origin corner1 corner2]
-  (fn [frame]
-    (let [m          (frame-coord-map frame) 
-          new-origin (m origin)]
-      (painter (make-frame new-origin 
-                           (sub-vect (m corner1) new-origin)
-                           (sub-vect (m corner2) new-origin))))))
-
-(defn flip-vert [painter]
-  (transform-painter painter (make-vect 0 1) (make-vect 1 1) (make-vect 0 0)))
-
-(defn flip-horiz [painter]
-  (transform-painter painter (make-vect 1 0) (make-vect 0 0) (make-vect 1 1)))
-
 (defn rotate90 [painter]
   (transform-painter painter (make-vect 1 0) (make-vect 1 1) (make-vect 0 0)))
 
@@ -210,7 +178,7 @@
       :size [500 500]
       :setup setup
       :middleware [m/fun-mode]
-      :draw (fn [state]
+      :draw (fn [_]
         (q/clear)
         (q/background 255)
         (q/stroke-weight 3)
@@ -222,7 +190,7 @@
       :size [500 500]
       :setup setup
       :middleware [m/fun-mode]
-      :draw (fn [state]
+      :draw (fn [_]
         (q/clear)
         (q/background 255)
         (q/stroke-weight 3)
@@ -235,7 +203,7 @@
     :size [500 500]
     :setup setup
     :middleware [m/fun-mode]
-    :draw (fn [state]
+    :draw (fn [_]
       (q/clear)
       (q/background 255)
       (q/stroke-weight 3)

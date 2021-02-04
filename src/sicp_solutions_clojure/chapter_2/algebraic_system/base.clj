@@ -1,5 +1,5 @@
 (ns sicp-solutions-clojure.chapter-2.algebraic-system.base
-  (:refer-clojure :exclude [type get val vals zero? ]))
+  (:refer-clojure :exclude [type get val vals zero? number?]))
 
 (def ops-types-map {})
 
@@ -10,51 +10,73 @@
   (alter-var-root (var ops-types-map) 
                   (constantly (assoc ops-types-map symbols val))))
 
-(def coercion-map {})
+(comment
+  (def coercion-map {})
 
-(defn get-coercion [symbols]
-  (clojure.core/get coercion-map symbols))
+  (defn get-coercion [symbols]
+    (clojure.core/get coercion-map symbols))
 
-(defn put-coercion! [symbols val]
-  (alter-var-root (var coercion-map)
-                  (constantly (assoc coercion-map symbols val))))
+  (defn put-coercion! [symbols val]
+    (alter-var-root (var coercion-map)
+                    (constantly (assoc coercion-map symbols val)))))
 
 (defn type [x]
-  (if (number? x) 'primitive (first x)))
+  (if (clojure.core/number? x) 'primitive (first x)))
 (defn val [x]
-  (if (number? x) x (second x)))
+  (if (clojure.core/number? x) x (second x)))
+(defn wrap [t v]
+  (if (= 'primitive t) v (vector t v)))
+(defn number? [x]
+  (boolean (or (clojure.core/number? x) (get [(type x) 'zero?]))))
 
-(defn apply-general-coercioned [sym & vars]
+(defn apply-general-converted [sym & vars]
+  ; Duties: apply the sym to vars, and then wrap them up.
   (let [ops-types-key (vec (conj (map type vars) sym))]
     (if-let [f (get ops-types-key)]
-      (apply f (map val vars))
+      (let [result (apply f (map val vars))
+            out-type (if (= sym 'project) (get ['project-to (type (first vars))]) (type (first vars)) )]
+        (if (boolean? result) result
+          (wrap out-type result)))
       (throw (Exception. (str 
-                          "apply-general-coercioned: no function for key: " 
+                          "apply-general-converted: no function for key: " 
                           ops-types-key))))))
 
-(defn apply-general [sym & vars] 
+;; apply-general: raising version
+;; It's but a practice, so I'll try a hierarchy that is consitent with previous 
+;; work, it looks like this:
+;; rational -> primitive -> complex
+(defn level [x]
+  (get ['level (type x)]))
+
+(defn raise [x] ; Always remember to unwrap the variables
+  ((get ['raise (type x)]) (val x)))
+
+(defn apply-general [sym & vars]
+  ;Duties: raise variable types, Unwrap the tagged numbers
   (if (= 2 (count vars))
     (let [v1 (first vars)
-          v2 (second vars)
-          t1 (type v1) 
-          t2 (type v2)]
-      (if-let [f (get [sym t1 t2])]
-        (f (val v1) (val v2))
-        (if-let [g (get-coercion [t1 t2])]
-          (apply-general-coercioned sym (g v1) v2)
-          (if-let [h (get-coercion [t2 t1])]
-            (apply-general-coercioned sym v1 (h v2))
-            (throw (Exception. (str 
-                                "apply-general: no function for key: " 
-                                [sym t1 t2])))))))
-    (apply-general-coercioned sym vars)))
+          v2 (second vars)]
+      (cond (< (level v1) (level v2)) (recur sym (list (raise v1) v2))
+            (= (level v1) (level v2)) (apply-general-converted sym v1 v2)
+            :else (recur sym (list v1 (raise v2)))))
+    (apply apply-general-converted sym vars)))
 
 (defn make [key & args]
-  (apply (get (concat ['make] key)) (map val args)))
+  (let [inner (apply (get (concat ['make] key)) (map val args))
+        t (first key)]
+    (if (= t 'primitive) inner (vector t inner))))
 
 (defn add [x y] (apply-general 'add x y))
-(defn sub [x y] (apply-general 'sub x y))
+(defn neg [x] (apply-general 'neg x))
+(defn sub [x y] (add x (neg y)))
 (defn mul [x y] (apply-general 'mul x y))
 (defn div [x y] (apply-general 'div x y))
 (defn eq? [x y] (apply-general 'eq? x y))
 (defn zero? [x] (apply-general 'zero? x))
+
+(defn project [x] (apply-general 'project x))
+(defn lower [x]
+  (if (= (level x) 1) 
+    x
+    (let [p (project x)]
+      (if (eq? (raise p) x) (recur p) x))))

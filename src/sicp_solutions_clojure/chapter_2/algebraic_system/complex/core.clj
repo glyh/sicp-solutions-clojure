@@ -34,6 +34,7 @@
 (defn add [z1 z2]
   (real-imag->complex (+ (real-part z1) (real-part z2))
                       (+ (imag-part z1) (imag-part z2))))
+(defn neg [z] (apply-general 'neg z))
 (defn sub [z1 z2]
   (real-imag->complex (- (real-part z1) (real-part z2))
                       (- (imag-part z1) (imag-part z2))))
@@ -60,9 +61,11 @@
   (put! ['imag-part 'polar] (comp polar/imag-part val))
   (put! ['magnitude 'polar] (comp polar/magnitude val))
   (put! ['angle 'polar] (comp polar/angle val))
+  (put! ['neg 'polar] (comp polar/neg val))
   ; Cartesian representation
   (put! ['make 'cartesian] (comp cartesian/tag cartesian/make))
   (put! ['real-part 'cartesian] (comp cartesian/real-part val))
   (put! ['imag-part 'cartesian] (comp cartesian/imag-part val))
   (put! ['magnitude 'cartesian] (comp cartesian/magnitude val))
+  (put! ['neg 'cartesian] (comp cartesian/neg val))
   (put! ['angle 'cartesian] (comp cartesian/angle val)))
