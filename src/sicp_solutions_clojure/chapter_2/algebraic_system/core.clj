@@ -1,11 +1,12 @@
 (ns sicp-solutions-clojure.chapter-2.algebraic-system.core 
   (:refer-clojure :exclude [test zero?])
   (:require (sicp-solutions-clojure.chapter-2.algebraic-system 
-             [base :as base :refer [add mul div make eq? lower project zero?]]
-             [polynomial :as polynomial]
+             [base :as base :refer [add sub mul div make eq? lower zero?]]
              [ratio :as ratio])
             (sicp-solutions-clojure.chapter-2.algebraic-system.complex 
-             [core :as complex])))
+             [core :as complex])
+            (sicp-solutions-clojure.chapter-2.algebraic-system.polynomial 
+             [core :as poly])))
 
 (defn init! [] 
   ; This piece of code is really ugly, I write them just to follow SICP. 
@@ -14,10 +15,10 @@
     ; Operators:
   (base/put! ['make 'primitive] identity)
   (base/put! ['add 'primitive 'primitive] +)
-  (base/put! ['negative 'primitive] -)
+  (base/put! ['neg 'primitive] -)
   (base/put! ['mul 'primitive 'primitive] *)
   (base/put! ['div 'primitive 'primitive] /)
-    ; Predicates(complex/ma):
+    ; Predicates:
   (base/put! ['eq? 'primitive 'primitive] =)
   (base/put! ['zero? 'primitive] clojure.core/zero?)
     ; hierarchy
@@ -65,14 +66,16 @@
   ; (base/put-coercion! ['primitive 'complex] coercion/primitive->complex)
   ; Install polynomial module
     ; Operators:
-  (base/put! ['make 'polynomial] polynomial/make-poly)
-  (base/put! ['add 'polynomial 'polynomial] polynomial/add-poly)
-  (base/put! ['mul 'polynomial 'polynomial] polynomial/mul-poly)
+  (base/put! ['make 'polynomial] poly/make-poly)
+  (base/put! ['make 'polynomial] poly/make-poly)
+  (base/put! ['add 'polynomial 'polynomial] poly/add-poly)
+  (base/put! ['neg 'polynomial] poly/neg)
+  (base/put! ['mul 'polynomial 'polynomial] poly/mul-poly)
     ; Predicates:
-  (base/put! ['zero? 'polynomial] polynomial/zero?)
+  (base/put! ['zero? 'polynomial] poly/zero?)
     ; Hierarchy:
   (base/put! ['level 'polynomial] 4)
-  (base/put! ['project 'polynomial] polynomial/find-constant)
+  (base/put! ['project 'polynomial] poly/find-constant)
   (base/put! ['project-to 'polynomial] 'complex))
 
 (defn real-part [x] 
@@ -102,6 +105,13 @@
                 (make ['complex 'mag-ang] 5 (/ Math/PI 3))))
   (println (zero? (make ['rational] 0 3)))
   (println (add (make ['rational] 7 3) (make ['complex 'real-imag] 4 5)))
-  (println (lower (make ['complex 'real-imag] 1 0))))
+  (println (lower (make ['complex 'real-imag] 1 0)))
+  (let [P1 (sub (make ['polynomial] 'x 
+                      (poly/list->terms '((0 3) (2 5))))
+                (make ['polynomial] 'x 
+                      (poly/list->terms '((1 4) (2 3) (100 7)))))]
+    (println P1)
+    (println (make ['polynomial] 'y 
+                   (poly/list->terms (list '(0 4) (list 5 P1)))))))
 
 (comment (test))

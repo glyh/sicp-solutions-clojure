@@ -62,7 +62,7 @@
     (apply apply-general-converted sym vars)))
 
 (defn make [key & args]
-  (let [inner (apply (get (concat ['make] key)) (map val args))
+  (let [inner (apply (get (concat ['make] key)) args)
         t (first key)]
     (if (= t 'primitive) inner (vector t inner))))
 
