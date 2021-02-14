@@ -1,7 +1,6 @@
-(ns sicp-solutions-clojure.chapter-2.algebraic-system.polynomial
-  (:refer-clojure :exclude [zero? get type])
-  (:require (sicp-solutions-clojure.chapter-2.algebraic-system)
-            (sicp-solutions-clojure.chapter-2.algebraic-system.polynomial
+(ns sicp-solutions-clojure.chapter-2.algebraic-system.polynomial.core
+  (:refer-clojure :exclude [zero? get type val])
+  (:require (sicp-solutions-clojure.chapter-2.algebraic-system.polynomial
              [sparse :as sparse]
              [dense :as dense])))
 
@@ -14,22 +13,35 @@
   (alter-var-root (var ops-types-map) 
                   (constantly (assoc ops-types-map symbols val))))
 
-(defn type [x]
-  (first x))
+(def type first)
+(def val second)
 
-(defn dense->sparse [terms]
-  terms)
+(defn ->sparse [terms]
+  (if (= (type terms) 'sparse) terms ;;dense
+    (let [n (count (val terms))
+          f (fn [idx itm]
+              (sparse/make-term (- n idx 1) itm))]
+      (->> (val terms)
+           (map-indexed f)
+           (vector 'sparse)))))
+
 (defn apply-general [sym & args] 
+  ;; (prn sym (map ->sparse args))
   ; Till now my codes are highly inconsistent. since haven't thought of the 
   ; design clearly before. Also, the requirements (from the exercises) keep 
-  ; changing . 
+  ; changing. 
 
   ; Here I choose all coerce to sparse one, though it might not be a great way. 
-  (let [x (first args)] (apply (get [sym (type x)]) args)))
+  (if (and (some #(= 'dense (type %)) args) (some #(= 'sparse (type %)) args))
+    (recur sym (map ->sparse args))
+    ;; (vector 'sparse (apply (get [sym 'sparse]) (map ->sparse args)))
+    (let [x (first args)] 
+      (vector (type x) (apply (get [sym (type x)]) (map val args))))))
+
+(def list->sparse-terms sparse/list->sparse-terms)
+(def vector->dense-terms dense/vector->dense-terms)
 
 (defn make-poly [v terms]
-  (assert (and (= (type v) clojure.lang.Symbol)
-               (seq? terms)))
   {:variable v, 
    :terms    terms})
 
@@ -38,9 +50,9 @@
 (defn mul-terms [t1 t2]
   (apply-general 'mul t1 t2))
 (defn neg [p]
-  (apply-general 'neg p))
+  (make-poly (:variable p) (apply-general 'neg (:terms p))))
 (defn find-constant [p]
-  (apply-general 'find-constant p))
+  (apply-general 'find-constant (:terms p)))
 
 (defn add-poly [p1 p2]
   (if (= (:variable p1) (:variable p2)) 
@@ -54,6 +66,18 @@
     (throw (Exception. (str "Polys not in same var: MUL-POLY" (list p1 p2))))))
 
 (defn zero? [p] 
-  (empty? (:terms p)))
+  (apply-general 'zero? (:terms p)))
 
 (def tag #(vector 'polynomial %))
+
+(defn init![]
+  (put! ['zero? 'dense] dense/zero?)
+  (put! ['zero? 'sparse] sparse/zero?)
+  (put! ['find-constant 'dense] dense/find-constant)
+  (put! ['find-constant 'sparse] sparse/find-constant)
+  (put! ['add 'dense] dense/add-terms)
+  (put! ['add 'sparse] sparse/add-terms)
+  (put! ['mul 'dense] dense/mul-terms)
+  (put! ['mul 'sparse] sparse/mul-terms)
+  (put! ['neg 'dense] dense/neg-terms)
+  (put! ['neg 'sparse] sparse/neg-terms))

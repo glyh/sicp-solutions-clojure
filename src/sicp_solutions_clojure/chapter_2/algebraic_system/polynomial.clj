@@ -1,9 +1,13 @@
-(ns sicp-solutions-clojure.chapter-2.algebraic-system.polynomial.sparse
+(ns sicp-solutions-clojure.chapter-2.algebraic-system.polynomial
   (:refer-clojure :exclude [zero?])
   (:require (sicp-solutions-clojure.chapter-2.algebraic-system
              [base :as base])))
 
-(def tag #(vector 'sparse %))
+(defn make-poly [v terms]
+  (assert (and (= (type v) clojure.lang.Symbol)
+               (= (type terms) clojure.lang.PersistentList)))
+  {:variable v, 
+   :terms    terms})
 
 (defn make-term [order coeff] 
   (assert (and (int? order)
@@ -11,19 +15,10 @@
   {:order order,
    :coeff coeff})
 
-(defn list->sparse-terms [l]
-  (assert (= (type l) clojure.lang.PersistentList))
-  (->> l
-       (map (fn [x] 
-              (assert (number? (first x)))
-              {:order (first x) :coeff (second x)}))
-       (sort (fn [x y] (> (:order x) (:order y))))
-       tag))
-
 (defn adjoin-term [term term-list] 
   (if (base/zero? (:coeff term))
     term-list 
-    (conj term-list term )))
+    (conj term term-list)))
 
 (defn add-terms [L1 L2]
   (cond 
@@ -41,6 +36,12 @@
                  (make-term (:order t1) (base/add (:coeff t1) (:coeff t2)))
                  (add-terms (rest L1) (rest L2)))))))
 
+(defn add-poly [p1 p2]
+  (if (= (:variable p1) (:variable p2)) 
+    ; This is incomplete, what about constant?
+    (make-poly (:variable p1) (add-terms (:terms p1) (:terms p2)))
+    (throw (Exception. (str "Polys not in same var: ADD-POLY" (list p1 p2))))))
+
 (defn mul-term-terms [t1 L2]
   (if (empty? L2)
     ()
@@ -54,16 +55,28 @@
     ()
     (add-terms (mul-term-terms (first L1) L2) (mul-terms (rest L1) L2))))
 
-(defn neg-terms [t]
-  (map #(make-term (:order %) (base/neg (:coeff %))) t))
+(defn mul-poly [p1 p2]
+  (if (= (:variable p1) (:variable p2))
+    (make-poly (:variable p1) (mul-terms (:terms p1) (:terms p2)))
+    (throw (Exception. (str "Polys not in same var: MUL-POLY" (list p1 p2))))))
 
-(defn find-constant [t]
-  (cond 
-       (empty? t)
+(defn zero? [p] 
+  (empty? (:terms p)))
+
+(defn neg [p]
+  (make-poly (:variable p) 
+             (map #(make-term (:order %) (base/neg (:coeff %))) 
+                  (:terms p))))
+
+(def tag #(vector 'polynomial %))
+
+(defn find-constant [p]
+  ((fn [terms]
+     (cond 
+       (empty? terms)
          0
-       (= (:order (first t)) 0)
-         (:coeff (first t))
+       (= (:order (first terms)) 0)
+         (:coeff (first terms))
        :else 
-         (recur (rest t))))
-
-(defn zero? [t] (every? (comp zero? :coeff) t))
+         (recur (rest terms)))) 
+   (:terms p)))

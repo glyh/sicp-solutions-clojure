@@ -65,8 +65,8 @@
   ; Install coercion module
   ; (base/put-coercion! ['primitive 'complex] coercion/primitive->complex)
   ; Install polynomial module
+  (poly/init!)
     ; Operators:
-  (base/put! ['make 'polynomial] poly/make-poly)
   (base/put! ['make 'polynomial] poly/make-poly)
   (base/put! ['add 'polynomial 'polynomial] poly/add-poly)
   (base/put! ['neg 'polynomial] poly/neg)
@@ -106,12 +106,11 @@
   (println (zero? (make ['rational] 0 3)))
   (println (add (make ['rational] 7 3) (make ['complex 'real-imag] 4 5)))
   (println (lower (make ['complex 'real-imag] 1 0)))
-  (let [P1 (sub (make ['polynomial] 'x 
-                      (poly/list->terms '((0 3) (2 5))))
+  (let [P1 (add (make ['polynomial] 'x 
+                      (poly/list->sparse-terms '((0 3) (100 -7) (2 5))))
                 (make ['polynomial] 'x 
-                      (poly/list->terms '((1 4) (2 3) (100 7)))))]
-    (println P1)
+                      (poly/vector->dense-terms [-1 -4 2 8 5 7])))]
     (println (make ['polynomial] 'y 
-                   (poly/list->terms (list '(0 4) (list 5 P1)))))))
+                   (poly/list->sparse-terms (list '(0 4) (list 5 P1)))))))
 
 (comment (test))

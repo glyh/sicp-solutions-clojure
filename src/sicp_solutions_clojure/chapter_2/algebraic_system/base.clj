@@ -51,8 +51,13 @@
 (defn raise [x] ; Always remember to unwrap the variables
   ((get ['raise (type x)]) (val x)))
 
+(comment (let [lock (Object.)]
+   (defn sync-println [& args]
+     (locking lock (apply println args)))))
+
 (defn apply-general [sym & vars]
   ;Duties: raise variable types, Unwrap the tagged numbers
+  ; (sync-println sym vars)
   (if (= 2 (count vars))
     (let [v1 (first vars)
           v2 (second vars)]
@@ -66,7 +71,8 @@
         t (first key)]
     (if (= t 'primitive) inner (vector t inner))))
 
-(defn add [x y] (apply-general 'add x y))
+(defn add [x y]
+  (apply-general 'add x y))
 (defn neg [x] (apply-general 'neg x))
 (defn sub [x y] (add x (neg y)))
 (defn mul [x y] (apply-general 'mul x y))
