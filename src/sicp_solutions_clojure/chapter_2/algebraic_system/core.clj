@@ -60,6 +60,7 @@
   (base/put! ['zero? 'complex] complex/zero?)
     ; Hierarchy:
   (base/put! ['level 'complex] 3)
+  (base/put! ['raise 'complex] #(poly/make-poly 'x (list 'dense (vector %))))
   (base/put! ['project 'complex] complex/real-part)
   (base/put! ['project-to 'complex] 'primitive)
   ; Install coercion module
@@ -69,13 +70,13 @@
     ; Operators:
   (base/put! ['make 'polynomial] poly/make-poly)
   (base/put! ['add 'polynomial 'polynomial] poly/add-poly)
-  (base/put! ['neg 'polynomial] poly/neg)
+  (base/put! ['neg 'polynomial] poly/neg-poly)
   (base/put! ['mul 'polynomial 'polynomial] poly/mul-poly)
     ; Predicates:
   (base/put! ['zero? 'polynomial] poly/zero?)
     ; Hierarchy:
   (base/put! ['level 'polynomial] 4)
-  (base/put! ['project 'polynomial] poly/find-constant)
+  (base/put! ['project 'polynomial] poly/constant)
   (base/put! ['project-to 'polynomial] 'complex))
 
 (defn real-part [x] 
