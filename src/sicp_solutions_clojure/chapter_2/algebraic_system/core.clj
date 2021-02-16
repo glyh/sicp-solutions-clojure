@@ -1,3 +1,4 @@
+(use 'clojure.tools.trace)
 (ns sicp-solutions-clojure.chapter-2.algebraic-system.core 
   (:refer-clojure :exclude [test zero?])
   (:require (sicp-solutions-clojure.chapter-2.algebraic-system 
@@ -60,7 +61,7 @@
   (base/put! ['zero? 'complex] complex/zero?)
     ; Hierarchy:
   (base/put! ['level 'complex] 3)
-  (base/put! ['raise 'complex] #(poly/make-poly 'x (list 'dense (vector %))))
+  (base/put! ['raise 'complex] #(poly/tag (poly/make-poly 'x (vector 'dense [['complex %]]))))
   (base/put! ['project 'complex] complex/real-part)
   (base/put! ['project-to 'complex] 'primitive)
   ; Install coercion module
@@ -74,10 +75,10 @@
   (base/put! ['mul 'polynomial 'polynomial] poly/mul-poly)
     ; Predicates:
   (base/put! ['zero? 'polynomial] poly/zero?)
+  (base/put! ['eq? 'polynomial 'polynomial] poly/eq?-poly)
     ; Hierarchy:
   (base/put! ['level 'polynomial] 4)
-  (base/put! ['project 'polynomial] poly/constant)
-  (base/put! ['project-to 'polynomial] 'complex))
+  (base/put! ['project 'polynomial] poly/constant-poly))
 
 (defn real-part [x] 
   (if (= (base/type x) 'complex)
@@ -112,6 +113,21 @@
                 (make ['polynomial] 'x 
                       (poly/vector->dense-terms [-1 -4 2 8 5 7])))]
     (println (make ['polynomial] 'y 
-                   (poly/list->sparse-terms (list '(0 4) (list 5 P1)))))))
+                   (poly/list->sparse-terms (list '(0 4) (list 5 P1))))))
+  (let [P1 (make ['polynomial] 'x (poly/list->sparse-terms '((0 3) (1 4) (4 9))))
+        P2 (make ['polynomial] 'y (poly/list->sparse-terms '((0 3) (1 4) (4 9))))
+        P3 (make ['polynomial] 'x (poly/vector->dense-terms [9 8 7 34 2 7]))]
+    (println (add P1 P2))))
 
+(comment (prn *e))
 (comment (test))
+
+(base/apply-general-converted 'eq? ['polynomial {:variable 'x, :terms ['dense [['complex ['cartesian [10 0]]]]]}] 
+                                   ['polynomial {:variable 'x, :terms ['sparse (list {:order 100, :coeff -7} 
+                                                                                     {:order 5, :coeff -1} 
+                                                                                     {:order 4, :coeff -4} 
+                                                                                     {:order 3, :coeff 2}
+                                                                                     {:order 2, :coeff ['rational [13 1]]} 
+                                                                                     {:order 1, :coeff 5}
+                                                                                     {:order 0, :coeff ['rational [10 1]]})]}])
+;; (trace-ns sicp-solutions-clojure.chapter-2.algebraic-system.core)

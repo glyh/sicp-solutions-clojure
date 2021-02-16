@@ -7,7 +7,7 @@
 
 (def tag #(vector 'dense %))
 
-(defn strip-leading-0s [t] 
+(defn strip-zeros [t] 
   (loop [result t]
     (if (= (clojure.core/first result) 0)
       (recur (rest result))
@@ -15,10 +15,10 @@
 
 (defn vector->dense-terms [v]
   (assert (= (type v) clojure.lang.PersistentVector))
-  (tag (strip-leading-0s v)))
+  (tag (strip-zeros v)))
 
 (defn add-terms [t1 t2]
-  (strip-leading-0s      
+  (strip-zeros      
     (let [len1 (count t1)
           len2 (count t2)]
       (cond 
@@ -42,12 +42,12 @@
     (->> t2
          (map-indexed mul-term-terms)
          (reduce add-terms)
-         strip-leading-0s)))
+         strip-zeros)))
 
 (defn constant [t] (last t))
 
 (defn add-constant [t c]
-  (vec (conj (subvec t 0 (count t)) (base/add (last t) c))))
+  (conj (subvec t 0 (count t)) (base/add (last t) ['polynomial c])))
 
 (defn constant? [t] (<= (count t) 1))
 

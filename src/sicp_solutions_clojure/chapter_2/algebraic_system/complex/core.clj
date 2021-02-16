@@ -17,6 +17,7 @@
   (first x))
 
 (defn apply-general [sym x] 
+  ;; (prn sym x)
   ((get [sym (type x)]) x))
 
 (def eps 1e-7)

@@ -27,16 +27,24 @@
 (defn wrap [t v]
   (if (= 'primitive t) v (vector t v)))
 (defn number? [x]
-  (boolean (or (clojure.core/number? x) (get [(type x) 'zero?]))))
+  (boolean (or (clojure.core/number? x) (get ['zero? (type x)]))))
 
 (defn apply-general-converted [sym & vars]
   ; Duties: apply the sym to vars, and then wrap them up.
   (let [ops-types-key (vec (conj (map type vars) sym))]
+    (prn "haha" ops-types-key (get ops-types-key))
     (if-let [f (get ops-types-key)]
-      (let [result (apply f (map val vars))
-            out-type (if (= sym 'project) (get ['project-to (type (first vars))]) (type (first vars)) )]
-        (if (boolean? result) result
-          (wrap out-type result)))
+      (do
+        (prn 'test sym (map val vars) )
+      (let [result (apply f (map val vars))]
+        (cond (boolean? result) 
+                result
+              (= sym 'project) 
+                (if (= (type (first vars)) 'polynomial)
+                  result
+                  (wrap (get ['project-to (type (first vars))]) result))
+              :else 
+                (wrap (type (first vars)) result))))
       (throw (Exception. (str 
                           "apply-general-converted: no function for key: " 
                           ops-types-key))))))
@@ -55,16 +63,19 @@
    (defn sync-println [& args]
      (locking lock (apply println args)))))
 
+(declare lower)
+
 (defn apply-general [sym & vars]
   ;Duties: raise variable types, Unwrap the tagged numbers
   ; (sync-println sym vars)
+  ;; (prn "base/apply-general" sym vars)
   (if (= 2 (count vars))
     (let [v1 (first vars)
           v2 (second vars)]
       (cond (< (level v1) (level v2)) (recur sym (list (raise v1) v2))
-            (= (level v1) (level v2)) (apply-general-converted sym v1 v2)
+            (= (level v1) (level v2)) (lower (apply-general-converted sym v1 v2))
             :else (recur sym (list v1 (raise v2)))))
-    (apply apply-general-converted sym vars)))
+    (lower (apply apply-general-converted sym vars))))
 
 (defn make [key & args]
   (let [inner (apply (get (concat ['make] key)) args)
@@ -82,7 +93,9 @@
 
 (defn project [x] (apply-general 'project x))
 (defn lower [x]
-  (if (= (level x) 1) 
+  (if (or (boolean? x) (= (level x) 1)) 
     x
     (let [p (project x)]
       (if (eq? (raise p) x) (recur p) x))))
+;; (use 'clojure.tools.trace)
+;; (trace-ns sicp-solutions-clojure.chapter-2.algebraic-system.base)

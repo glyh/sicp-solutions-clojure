@@ -15,43 +15,46 @@
   (alter-var-root (var ops-types-map) 
                   (constantly (assoc ops-types-map symbols val))))
 
-(def type clojure.core/first)
-(def val second)
-
 (defn ->sparse [terms]
-  (if (= (type terms) 'sparse) terms ;;dense
-    (let [n (count (val terms))
+  (if (= (base/type terms) 'dense)
+    (let [n (count (base/val terms))
           f (fn [idx itm]
               (sparse/make-term (- n idx 1) itm))]
-      (->> (val terms)
+      (->> (base/val terms)
            (map-indexed f)
-           (vector 'sparse)))))
+           (vector 'sparse)))
+     terms))
 
-(declare constant)
-(declare constant?)
+(declare constant-term)
+(declare constant?-term)
 
-(defn strip-vars [p]
-  (loop [r p]
-    (if (constant? r)
-      (recur (constant r))
+(defn strip-vars [t]
+  (loop [r t]
+    (prn "strip-vars:" r)
+    (if (constant?-term t))
+    (if (and (= (base/type r) 'polynomial) (constant?-poly (base/val r)))
+      (recur (constant-poly (base/val r)))
       r)))
 
 (defn apply-general [sym & args] 
-  ;; (prn sym (map ->sparse args))
+  ;; Design fault here: apply-general needs to know the variable!!!!
+  ;; Or else, it can't judge whether a polynomial is constant or not!
+
+  ;; result in terms
   ; Till now my codes are highly inconsistent. since haven't thought of the 
   ; design clearly before. Also, the requirements (from the exercises) keep 
   ; changing. 
 
   ; Here I choose all coerce to sparse one, though it might not be a great way. 
-  (if (and (some #(= 'dense (type %)) args) (some #(= 'sparse (type %)) args))
+  (if (and (some #(= 'dense (base/type %)) args) (some #(= 'sparse (base/type %)) args))
     (recur sym (map ->sparse args))
     ;; (vector 'sparse (apply (get [sym 'sparse]) (map ->sparse args)))
-    (let [t      (type (clojure.core/first args))
-          result (apply (get [sym t]) (map val args))] 
+    (let [t      (base/type (clojure.core/first args))
+          result (apply (get [sym t]) (map base/val args))] 
       (cond 
         (boolean? result) result
-        (= sym 'constant) (vector t result) ;; Avoid dead loop
-        :else             (strip-vars (vector (t result)))))))
+        (= sym 'constant) result ;; Avoid dead loop
+        :else             (strip-vars (vector t result))))))
 
 (def list->sparse-terms sparse/list->sparse-terms)
 (def vector->dense-terms dense/vector->dense-terms)
@@ -72,50 +75,77 @@
 (defn neg-poly [p]
   (make-poly (:variable p) (neg-term (:terms p))))
 
-(defn constant [p]
-  (apply-general 'constant (:terms p)))
+(defn constant-term [t]
+  (apply-general 'constant t))
 
-(defn constant? [p]
-  (apply-general 'constant? (:terms p)))
+(defn constant-poly [p]
+  (constant-term (:terms p)))
 
-(defn add-constant [p c] 
-  (apply-general 'add-constant (:terms p) c))
+(defn constant?-term [t]
+  (apply-general 'constant? t))
+
+(defn constant?-poly [p]
+  (constant?-term (:terms p)))
+
+(def tag #(vector 'polynomial %))
+
+(defn add-constant-poly [p c] 
+  ;; (prn "add-constant-poly" p c)
+  (make-poly (:variable p) (apply-general 'add-constant (:terms p) c)))
 
 (defn add-poly [p1 p2]
-  (prn p1 p2)
   (cond 
     (or (= (:variable p1) (:variable p2))
-        (constant? (:terms p2)))
+        (constant?-poly p2))
       (make-poly (:variable p1) (add-terms (:terms p1) (:terms p2)))
-    (constant? (:terms p1))
+    (constant?-poly p1)
       (make-poly (:variable p2) (add-terms (:terms p1) (:terms p2)))
     (< (compare (:variable p1) (:variable p2)) 0)
-      (add-constant p1 p2)
+      (add-constant-poly p1 (tag p2))
     :else 
-      (add-constant p2 p1)))
+      (add-constant-poly p2 (tag p1))))
 
-(defn ->constant [t]
+(defn ->constant-term [t]
   (vector->dense-terms [t]))
 
 (defn mul-poly [p1 p2]
   (cond 
     (or (= (:variable p1) (:variable p2))
-        (constant? (:terms p2)))
+        (constant?-poly p2))
       (make-poly (:variable p1) (mul-terms (:terms p1) (:terms p2)))
-    (constant? (:terms p1))
+    (constant?-poly p1)
       (make-poly (:variable p2) (mul-terms (:terms p2) (:terms p1)))
     (< (compare (:variable p1) (:variable p2)) 0)
       (make-poly (:variable p1) 
-                 (mul-terms (:terms p1) (->constant (:terms p2))))
+                 (mul-terms (:terms p1) (->constant-term (:terms p2))))
     :else 
       (make-poly (:variable p2) 
-                 (mul-terms (:terms p2) (->constant (:terms p1))))))
+                 (mul-terms (:terms p2) (->constant-term (:terms p1))))))
 
 (defn zero? [p] 
   (apply-general 'zero? (:terms p)))
 
+(defn strip-zeros [t] 
+  (apply-general 'strip-zeros t))
+
+(defn eq? [t1 t2]
+  (prn "eq? " t1 t2)
+  (if (not= (base/type t1) (base/type t2))
+    (recur (->sparse t1) (->sparse t2))
+    (let [st1 (strip-zeros t1)
+          st2 (strip-zeros t2)]
+      (prn "striped:" st1 st2)
+      (and (= (count st1) (count st2))
+        (->> (map base/eq? st1 st2)
+             (every? true?))))))
+
+(defn eq?-poly [p1 p2] 
+  (and 
+    (= (:variable p1) (:variable p2))
+    (eq? (:terms p1) (:terms p2))))
+
 (defn first [l]
-  ((get ['first (type l)]) (val l)))
+  ((get ['first (base/type l)]) (base/val l)))
 
 (def terms-nil (vector->dense-terms []))
 
@@ -134,8 +164,6 @@
                       l2)]
           (list (add-terms q major-term) r))))))
 
-(def tag #(vector 'polynomial %))
-
 (defn init![]
   (put! ['zero? 'dense] dense/zero?)
   (put! ['zero? 'sparse] sparse/zero?)
@@ -152,4 +180,10 @@
   (put! ['neg 'dense] dense/neg-terms)
   (put! ['neg 'sparse] sparse/neg-terms)
   (put! ['first 'dense] dense/first)
-  (put! ['first 'sparse] sparse/first))
+  (put! ['first 'sparse] sparse/first)
+  (put! ['strip-zeros 'dense] dense/strip-zeros)
+  (put! ['strip-zeros 'sparse] sparse/strip-zeros))
+
+(comment (init!))
+
+(strip-zeros '[sparse ({:coeff [complex [cartesian [0 0]]] :order 5} {:coeff 10 :order 4})])
