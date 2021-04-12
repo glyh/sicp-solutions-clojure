@@ -40,6 +40,7 @@
   (real-imag->complex (- (real-part z1) (real-part z2))
                       (- (imag-part z1) (imag-part z2))))
 (defn mul [z1 z2]
+  ;; (prn (magnitude z1) (magnitude z2) (angle z1) (angle z2))
   (mag-ang->complex (* (magnitude z1) (magnitude z2))
                     (+ (angle z1) (angle z2))))
 

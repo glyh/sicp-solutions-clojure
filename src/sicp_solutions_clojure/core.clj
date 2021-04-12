@@ -5,7 +5,7 @@
   (:gen-class))
 
 (def menu {:pic-lang pic-lang/show-sketch
-           :alg-sys alg-sys/test})
+           alg-sys/alg-test :alg-sys})
 
 (defn print-help []
   1)
@@ -18,4 +18,3 @@
 
 (comment (-main "pic-lang"))
 (comment (-main "alg-sys"))
-

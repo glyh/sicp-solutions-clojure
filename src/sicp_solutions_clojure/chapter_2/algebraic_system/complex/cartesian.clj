@@ -14,9 +14,9 @@
   (let [a (real-part x)
         b (imag-part x)]
     (cond 
-      (not= 0 b) (* 2 (Math/atan (/ b (+ (magnitude x) a)))))
+      (not (zero? b)) (* 2 (Math/atan (/ b (+ (magnitude x) a))))
       (neg? a)   Math/PI
-      :else      0))
+      :else      0)))
 
 (defn neg [x]
   (make (- (real-part x)) (imag-part x)))
