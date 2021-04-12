@@ -146,16 +146,20 @@
   (let [P1 (make ['polynomial] 'x (poly/vector->dense-terms [1]))
         P2 (make ['polynomial] 'x (poly/vector->dense-terms [1 2]))]
     (println (make ['ratio-func] P1 P2)))
+
   (let [P1 (make ['polynomial] 'x
                  (poly/list->sparse-terms '((0 3) (1 4) (4 9))))
         P2 (make ['polynomial] 'y
                  (poly/list->sparse-terms '((0 3) (1 4) (4 9))))
         P3 (make ['polynomial] 'x (poly/vector->dense-terms [1 4 2 8 5 7]))
-        P4 (make ['polynomial] 'x (poly/vector->dense-terms [1 3 5]))]
-    (println (mul P3 (sub P1 P2)))
-     (comment (println (div P3 P4) (remainder P3 P4))
-     (println (add (mul P3 P2) (mul P1 P4)))
-     (println (add (make ['ratio-func] P1 P3) (make ['ratio-func] P2 P4)))))
+        P4 (make ['polynomial] 'x (poly/vector->dense-terms [1 3 5]))
+        ]
+    ;;(println (mul P3 (sub P1 P2)));;Correct
+    ;;(println (div P3 P4) (remainder P3 P4));;Correct
+    ;;(println (add (mul P3 P2) (mul P1 P4)))
+    (println (add (make ['ratio-func] P1 P3) (make ['ratio-func] P2 P4)))
+    )
+
 
   (let [P1 (make ['polynomial] 'x (poly/vector->dense-terms [1 -2 1]))
         P2 (make ['polynomial] 'x (poly/vector->dense-terms [11 0 7]))

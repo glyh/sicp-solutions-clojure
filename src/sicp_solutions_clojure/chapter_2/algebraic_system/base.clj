@@ -16,6 +16,8 @@
                   (constantly (assoc ops-types-map symbols val))))
 
 
+
+
 (comment
   (def coercion-map {})
 
@@ -139,7 +141,7 @@
 
 (defn div
   [x y]
-  (prn 'div x y)
+  ;; (prn 'div x y)
   (apply-general 'div x y))
 
 
@@ -175,3 +177,10 @@
       (if (eq? p x) (recur p) x))));; As they say, we know the cost of nothing.
 ;; (use 'clojure.tools.trace)
 ;; (trace-ns sicp-solutions-clojure.chapter-2.algebraic-system.base)
+
+
+(defn ->primitive [x]
+  (prn x (type x))
+  (cond (= (type x) 'primitive) x
+        (= (type x) 'rational) (raise x)
+        :else (throw (Exception. "Can't convert to primitive"))))

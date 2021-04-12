@@ -32,11 +32,6 @@
     terms))
 
 
-(defn pp ; Pretty printing
-  [x t]
-  (let [t-format (->sparse t)]
-    (apply str (map #(str (:coeff %) x "^" (:order %) "+") (second t-format)))))
-
 ;; stripping redundent vars is not possible in apply-general.
 
 (defn apply-general
@@ -226,20 +221,26 @@
 ; to identify, and just can't identify a tuple of 2 polynomials.
 (defn div-terms
   [l1 l2]
-  ;; (prn "div " l1 l2)
+  ;;(prn "div terms" l1 l2)
   (if (zero? l1)
     terms-nil
     (let [t1 (first l1)
           t2 (first l2)]
       (if (> (:order t2) (:order t1))
         terms-nil
+        (do
+;;(prn "get major term:" (list->sparse-terms
+;;                           (list (list (- (:order t1) (:order t2))
+;;                                       (base/div (:coeff t1) (:coeff t2))))))
         (let [major-term (list->sparse-terms
                            (list (list (- (:order t1) (:order t2))
                                        (base/div (:coeff t1) (:coeff t2)))))
               q          (div-terms
                            (sub-terms l1 (mul-terms l2 major-term))
                            l2)]
-          (add-terms q major-term))))))
+          (add-terms q major-term))
+          )
+        ))))
 
 
 (defn div-poly
